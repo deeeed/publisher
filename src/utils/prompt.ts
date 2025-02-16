@@ -235,4 +235,17 @@ export class Prompts {
 
     return confirmed;
   }
+
+  async confirmAutoGeneration(): Promise<boolean> {
+    const { confirmed } = await inquirer.prompt<{ confirmed: boolean }>([
+      {
+        type: "confirm",
+        name: "confirmed",
+        message:
+          "Would you like to automatically generate changelog entries from commits?",
+        default: true,
+      },
+    ]);
+    return confirmed;
+  }
 }

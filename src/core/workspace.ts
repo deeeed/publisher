@@ -28,8 +28,17 @@ export class WorkspaceService {
 
   getRootDir(): string {
     if (!this.rootDir) {
-      this.rootDir = findMonorepoRootSync(process.cwd());
-      this.logger.debug("Monorepo root directory:", this.rootDir);
+      try {
+        // Try to find monorepo root first
+        this.rootDir = findMonorepoRootSync(process.cwd());
+      } catch (error) {
+        // If no monorepo root found, use current directory
+        this.rootDir = process.cwd();
+        this.logger.debug(
+          "No monorepo root found, using current directory as root",
+        );
+      }
+      this.logger.debug("Root directory:", this.rootDir);
     }
     return this.rootDir;
   }
@@ -45,7 +54,20 @@ export class WorkspaceService {
       onlyDirectories: true,
       ignore: ["**/node_modules/**"],
       cwd: rootDir,
+      expandDirectories: {
+        files: ["package.json"],
+      },
     });
+
+    // For single repo case, ensure root directory is included if it has package.json
+    if (workspaceGlobs.includes(".") && !packagePaths.includes(".")) {
+      try {
+        await this.readPackageJson(".");
+        packagePaths.push(".");
+      } catch (error) {
+        this.logger.debug("No package.json found in root directory");
+      }
+    }
 
     this.logger.debug("Found package paths:", packagePaths);
 
@@ -312,9 +334,10 @@ export class WorkspaceService {
   }
 
   private async getWorkspaceGlobs(): Promise<string[]> {
+    const rootDir = this.getRootDir();
+    const rootPkgJsonPath = path.join(rootDir, "package.json");
+
     try {
-      const rootDir = this.getRootDir();
-      const rootPkgJsonPath = path.join(rootDir, "package.json");
       const content = await readFile(rootPkgJsonPath, "utf-8");
       const rootPkgJson = JSON.parse(content) as PackageJson;
 
@@ -323,6 +346,7 @@ export class WorkspaceService {
         rootPkgJson.workspaces,
       );
 
+      // If workspaces are defined, return them
       if (rootPkgJson.workspaces) {
         if (Array.isArray(rootPkgJson.workspaces)) {
           return rootPkgJson.workspaces;
@@ -334,13 +358,14 @@ export class WorkspaceService {
           return rootPkgJson.workspaces.packages;
         }
       }
-      this.logger.warning(
-        "No workspaces found in package.json, using default: packages/*",
-      );
-      return ["packages/*"];
+
+      // If package.json exists but no workspaces defined, it's a single repo
+      this.logger.debug("No workspaces found, treating as single repo");
+      return ["."];
     } catch (error) {
-      this.logger.error("Error reading root package.json:", error);
-      return ["packages/*"];
+      // If no package.json exists at all, still treat as single repo
+      this.logger.debug("Error reading package.json, treating as single repo");
+      return ["."];
     }
   }
 
@@ -380,11 +405,16 @@ export class WorkspaceService {
     const currentDir = path.resolve(process.cwd());
     const packages = await this.getPackages();
 
-    // Find package whose path matches the current directory
+    if (packages.length === 1 && packages[0].path === this.getRootDir()) {
+      // Single repo case
+      return packages[0];
+    }
+
+    // Monorepo case - find package whose path matches the current directory
     const currentPackage = packages.find((pkg) =>
       currentDir.startsWith(pkg.path),
     );
 
-    return currentPackage || null;
+    return currentPackage ?? null;
   }
 }
