@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.6.0] - 2025-02-16
+### Changed
+- feat: enhance changelog generation with debugging and improved git integration (#1) ([cd9b671](https://github.com/deeeed/publisher/commit/cd9b6712dc046ff3d071d0ea7ef88eb1b7f2ea77))
+- setup ([10ea40c](https://github.com/deeeed/publisher/commit/10ea40cc48c79eb71e8588e9efee3d45ef900000))
+- new repo setup ([3c7fb80](https://github.com/deeeed/publisher/commit/3c7fb804a4ea11b1a1c91d0e3a52702b2b85282a))
 ## [0.5.0] - 2025-02-14
 ### Changed
 - feat(changelog): add automatic changelog generation & improve release workflow (#49) ([87ec7de](https://github.com/deeeed/universe/commit/87ec7ded31785bf7cc3fc807b4ae931741cad426))
@@ -49,7 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - full process with helper scripts
 - feat: full process with helper scripts
 
-[unreleased]: https://github.com/deeeed/universe/compare/@siteed/publisher@0.5.0...HEAD
+[unreleased]: https://github.com/deeeed/publisher/compare/@siteed/publisher@0.6.0...HEAD
+[0.6.0]: https://github.com/deeeed/publisher/compare/@siteed/publisher@0.5.0...@siteed/publisher@0.6.0
 [0.5.0]: https://github.com/deeeed/universe/compare/@siteed/publisher@0.4.19...@siteed/publisher@0.5.0
 [0.4.19]: https://github.com/deeeed/universe/compare/@siteed/publisher@0.4.18...@siteed/publisher@0.4.19
 [0.4.18]: https://github.com/deeeed/universe/compare/@siteed/publisher@0.4.17...@siteed/publisher@0.4.18
