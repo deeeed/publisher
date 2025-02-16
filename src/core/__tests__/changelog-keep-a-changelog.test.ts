@@ -16,13 +16,17 @@ jest.mock("fs", () => ({
     access: jest.fn(),
     stat: jest.fn(),
   },
+  statSync: jest.fn().mockReturnValue({
+    isFile: () => true,
+    isDirectory: () => true,
+  }),
 }));
 
 jest.mock("conventional-changelog", () => jest.fn());
 
 // Create a proper mock instance
 const mockWorkspaceService = {
-  getRootDir: jest.fn().mockResolvedValue("/monorepo/root"),
+  getRootDir: jest.fn().mockReturnValue("/monorepo/root"),
   readPackageJson: jest.fn().mockResolvedValue({
     name: "@siteed/publisher",
     repository: {
@@ -39,6 +43,26 @@ const mockWorkspaceService = {
 jest.mock("../workspace", () => ({
   WorkspaceService: jest.fn(() => mockWorkspaceService),
 }));
+
+jest.mock("simple-git", () => {
+  return jest.fn().mockImplementation(() => ({
+    init: jest.fn(),
+    addConfig: jest.fn(),
+    checkIsRepo: jest.fn().mockResolvedValue(true),
+    status: jest.fn().mockResolvedValue({ current: "main" }),
+    branch: jest.fn().mockResolvedValue({ current: "main" }),
+    raw: jest.fn().mockResolvedValue(""),
+    log: jest.fn().mockResolvedValue({ all: [] }),
+    tags: jest.fn().mockResolvedValue({ all: [] }),
+    revparse: jest.fn().mockResolvedValue(""),
+    show: jest.fn().mockResolvedValue(""),
+    diff: jest.fn().mockResolvedValue(""),
+    fetch: jest.fn().mockResolvedValue(""),
+    pull: jest.fn().mockResolvedValue(""),
+    push: jest.fn().mockResolvedValue(""),
+    remote: jest.fn().mockResolvedValue(""),
+  }));
+});
 
 describe("KeepAChangelogService", () => {
   let service: ChangelogService;

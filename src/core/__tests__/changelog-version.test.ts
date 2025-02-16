@@ -14,14 +14,32 @@ jest.mock("fs", () => ({
     access: jest.fn(),
     stat: jest.fn(),
   },
+  statSync: jest.fn(),
 }));
+
+jest.mock("simple-git", () => {
+  return jest.fn().mockImplementation(() => ({
+    init: jest.fn(),
+    addConfig: jest.fn(),
+    checkIsRepo: jest.fn().mockResolvedValue(true),
+    status: jest.fn().mockResolvedValue({ current: "main" }),
+    branch: jest.fn().mockResolvedValue({ current: "main" }),
+  }));
+});
 
 jest.mock("../workspace", () => ({
   WorkspaceService: jest.fn().mockImplementation(() => ({
-    getRootDir: jest.fn().mockResolvedValue("/monorepo/root"),
+    getRootDir: jest.fn().mockReturnValue("/monorepo/root"),
     readPackageJson: jest.fn().mockResolvedValue({
-      repository: "https://github.com/deeeed/universe",
+      name: "@siteed/publisher",
+      repository: {
+        type: "git",
+        url: "https://github.com/deeeed/universe",
+      },
     }),
+    getPackageJsonPath: jest
+      .fn()
+      .mockResolvedValue("/monorepo/root/package.json"),
   })),
 }));
 
@@ -46,7 +64,7 @@ describe("ChangelogService - Version Management", () => {
         tag: true,
         remote: "origin",
       },
-      workspaceService.getRootDir(),
+      ROOT_DIR,
     );
     service = new ChangelogService(logger, workspaceService, git);
     jest.clearAllMocks();

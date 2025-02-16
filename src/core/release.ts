@@ -13,7 +13,7 @@ import { findMonorepoRootSync } from "../utils";
 import { Logger } from "../utils/logger";
 import { Prompts } from "../utils/prompt";
 import { ChangelogService } from "./changelog";
-import { GitService } from "./git";
+import { GitCommit, GitService } from "./git";
 import { WorkspaceIntegrityService } from "./integrity";
 import {
   PackageManagerFactory,
@@ -42,6 +42,7 @@ export class ReleaseService {
     }
 
     this.rootDir = findMonorepoRootSync(process.cwd());
+    this.logger.info(`RootDir: ${this.rootDir}`);
     this.git = new GitService(config.git, this.rootDir, this.logger);
     this.packageManager = PackageManagerFactory.create(
       config.packageManager,
@@ -534,9 +535,7 @@ export class ReleaseService {
     return updates;
   }
 
-  async getGitChanges(
-    packageName: string,
-  ): Promise<Array<{ message: string }>> {
+  async getGitChanges(packageName: string): Promise<GitCommit[]> {
     const packages = await this.workspace.getPackages([packageName]);
     const pkg = packages[0];
 
@@ -544,8 +543,7 @@ export class ReleaseService {
       return [];
     }
 
-    const lastTag = await this.git.getLastTag(packageName);
-    return this.git.getCommitsSinceTag(lastTag, {
+    return this.git.getCommitsSinceTag(await this.git.getLastTag(pkg.name), {
       packageName: pkg.name,
       packagePath: pkg.path,
       filterByPath: true,
@@ -633,29 +631,88 @@ export class ReleaseService {
           ? preview
           : await this.prompts.getManualChangelogEntry();
       } else {
-        // Generate changelog from git commits if no unreleased changes
-        this.logger.info(
-          "No unreleased changes found, analyzing git commits...",
-        );
-        const preview = await this.changelog.previewNewVersion(
-          context,
-          packageConfig,
-          {
-            newVersion: context.newVersion ?? "x.x.x",
-            conventionalCommits: packageConfig.conventionalCommits || false,
-            format: packageConfig.changelogFormat || "conventional",
-            includeEmptySections:
-              packageConfig.changelogFormat === "keep-a-changelog",
-          },
-        );
-        this.logger.info("\nProposed changelog entries:\n");
-        this.logger.info(preview);
+        // No unreleased changes found, but there are git changes
+        if (gitChanges.length > 0) {
+          this.logger.info(
+            "No unreleased changes found, but detected the following git changes:",
+          );
 
-        // Allow user to confirm or provide manual entry
-        const confirmed = await this.prompts.confirmChangelogContent(preview);
-        finalChangelog = confirmed
-          ? preview
-          : await this.prompts.getManualChangelogEntry();
+          // Display commits first
+          gitChanges.forEach((commit) => {
+            this.logger.info(
+              `- ${commit.message} (${commit.hash.substring(0, 7)})`,
+            );
+          });
+
+          this.logger.info(
+            "\nWould you like to generate changelog entries from these commits?",
+          );
+
+          const shouldGenerateFromCommits =
+            await this.prompts.confirmAutoGeneration();
+          if (shouldGenerateFromCommits) {
+            // Format commits with URLs
+            const repoUrl = await this.changelog.getRepositoryUrl(
+              context,
+              packageConfig,
+            );
+            const formattedCommits = gitChanges.map((commit) => {
+              const commitUrl = `${repoUrl}/commit/${commit.hash}`;
+              return `- ${commit.message} ([${commit.hash.substring(0, 7)}](${commitUrl}))`;
+            });
+
+            // Update unreleased section with formatted commits
+            await this.changelog.addToUnreleased(context, formattedCommits);
+
+            // Generate preview with newly added commits
+            const preview = await this.changelog.previewNewVersion(
+              context,
+              packageConfig,
+              {
+                newVersion: context.newVersion ?? "x.x.x",
+                conventionalCommits: packageConfig.conventionalCommits || false,
+                format: packageConfig.changelogFormat || "conventional",
+                includeEmptySections:
+                  packageConfig.changelogFormat === "keep-a-changelog",
+              },
+            );
+
+            this.logger.info("\nGenerated changelog entries:\n");
+            this.logger.info(preview);
+
+            const confirmed =
+              await this.prompts.confirmChangelogContent(preview);
+            finalChangelog = confirmed
+              ? preview
+              : await this.prompts.getManualChangelogEntry();
+          } else {
+            finalChangelog = await this.prompts.getManualChangelogEntry();
+          }
+        } else {
+          // Generate changelog from git commits if no unreleased changes
+          this.logger.info(
+            "No unreleased changes found, analyzing git commits...",
+          );
+          const preview = await this.changelog.previewNewVersion(
+            context,
+            packageConfig,
+            {
+              newVersion: context.newVersion ?? "x.x.x",
+              conventionalCommits: packageConfig.conventionalCommits || false,
+              format: packageConfig.changelogFormat || "conventional",
+              includeEmptySections:
+                packageConfig.changelogFormat === "keep-a-changelog",
+            },
+          );
+          this.logger.info("\nProposed changelog entries:\n");
+          this.logger.info(preview);
+
+          // Allow user to confirm or provide manual entry
+          const confirmed = await this.prompts.confirmChangelogContent(preview);
+          finalChangelog = confirmed
+            ? preview
+            : await this.prompts.getManualChangelogEntry();
+        }
       }
 
       return finalChangelog;

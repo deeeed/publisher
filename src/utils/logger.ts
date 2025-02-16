@@ -24,7 +24,7 @@ export class Logger {
     this.level = options.level ?? this.getLogLevelFromEnv() ?? LogLevel.INFO;
 
     // Special case for debug flag - can be enabled via options or env
-    if (options.debug || process.env.DEBUG) {
+    if (options.debug ?? process.env.DEBUG) {
       this.level = LogLevel.DEBUG;
     }
   }
