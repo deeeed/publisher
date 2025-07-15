@@ -1,6 +1,6 @@
 {
   "name": "@siteed/publisher",
-  "version": "0.7.0-pre.3",
+  "version": "0.7.0",
   "description": "Flexible release management tool for JavaScript/TypeScript monorepos",
   "author": "Arthur Breton <abreton@siteed.net> (https://github.com/deeeed)",
   "license": "MIT",

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.7.0] - 2025-07-15
+### Changed
+- fix: enable interactive OTP authentication during npm publish ([a822101](https://github.com/deeeed/publisher/commit/a82210160a0741bf45822a60274a31c18feeb6a2))
+- chore(@siteed/publisher): release 0.6.0 ([0d3729e](https://github.com/deeeed/publisher/commit/0d3729e88d29dc6402ffeadae3a1c876d4725e91))
 ## [0.6.0] - 2025-02-16
 ### Changed
 - feat: enhance changelog generation with debugging and improved git integration (#1) ([cd9b671](https://github.com/deeeed/publisher/commit/cd9b6712dc046ff3d071d0ea7ef88eb1b7f2ea77))
@@ -54,7 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - full process with helper scripts
 - feat: full process with helper scripts
 
-[unreleased]: https://github.com/deeeed/publisher/compare/@siteed/publisher@0.6.0...HEAD
+[unreleased]: https://github.com/deeeed/publisher/compare/@siteed/publisher@0.7.0...HEAD
+[0.7.0]: https://github.com/deeeed/publisher/compare/@siteed/publisher@0.6.0...@siteed/publisher@0.7.0
 [0.6.0]: https://github.com/deeeed/publisher/compare/@siteed/publisher@0.5.0...@siteed/publisher@0.6.0
 [0.5.0]: https://github.com/deeeed/universe/compare/@siteed/publisher@0.4.19...@siteed/publisher@0.5.0
 [0.4.19]: https://github.com/deeeed/universe/compare/@siteed/publisher@0.4.18...@siteed/publisher@0.4.19
