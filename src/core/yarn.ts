@@ -54,6 +54,7 @@ export class YarnService implements PackageManagerService {
 
   private async execYarnCommand(
     args: string[],
+    options: { stdio?: "inherit" | "pipe" } = {},
   ): Promise<ExecaReturnValue<string>> {
     const version = await this.getYarnVersion();
 
@@ -67,11 +68,11 @@ export class YarnService implements PackageManagerService {
         return arg;
       });
 
-      return execa("yarn", yarn1Args);
+      return execa("yarn", yarn1Args, options);
     }
 
     // Use modern Yarn commands (Yarn Berry)
-    return execa("yarn", args);
+    return execa("yarn", args, options);
   }
 
   async validateAuth(config?: { npm: NpmConfig }): Promise<void> {
@@ -87,7 +88,9 @@ export class YarnService implements PackageManagerService {
       // Check if authentication is configured in .yarnrc.yml for Yarn Berry
       if (version.major === 2) {
         try {
-          await this.execYarnCommand(["config", "get", "npmAuthToken"]);
+          await this.execYarnCommand(["config", "get", "npmAuthToken"], {
+            stdio: "pipe",
+          });
         } catch (error) {
           throw new Error(
             "No authentication configured for Yarn Berry. Please add npmAuthToken to your .yarnrc.yml file:\n" +
@@ -108,7 +111,7 @@ export class YarnService implements PackageManagerService {
         cwd: process.cwd(),
       });
 
-      const result = await this.execYarnCommand(args);
+      const result = await this.execYarnCommand(args, { stdio: "pipe" });
       const username = result.stdout.toString().trim();
 
       if (!username) {
@@ -146,7 +149,7 @@ export class YarnService implements PackageManagerService {
         cwd: context.path,
       });
 
-      await this.execYarnCommand(publishArgs);
+      await this.execYarnCommand(publishArgs, { stdio: "inherit" });
       this.logger.debug("Package published successfully with Yarn");
     } catch (error) {
       this.logger.warn("Yarn publish failed, attempting npm fallback", {
@@ -160,7 +163,7 @@ export class YarnService implements PackageManagerService {
       });
 
       try {
-        await execa("npm", npmArgs, { cwd: context.path });
+        await execa("npm", npmArgs, { cwd: context.path, stdio: "inherit" });
         this.logger.debug("Package published successfully with npm fallback");
       } catch (npmError) {
         this.logger.error("Publication failed with both Yarn and npm", {
@@ -362,9 +365,11 @@ export class YarnService implements PackageManagerService {
         path: context.path,
       });
 
-      const result = await this.execYarnCommand(["pack", "--json"]);
+      const result = await this.execYarnCommand(["pack", "--json"], {
+        stdio: "pipe",
+      });
       const parsed = this.parseJsonResponse<YarnInfoResponse>(result.stdout);
-      packageFile = parsed.filename || "";
+      packageFile = parsed.filename ?? "";
 
       if (!packageFile) {
         throw new Error("No package file was created during pack");

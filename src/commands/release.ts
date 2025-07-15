@@ -18,6 +18,7 @@ interface ReleaseCommandOptions {
   skipUpstreamTracking?: boolean;
   force?: boolean;
   allowBranch?: boolean;
+  otp?: string;
 }
 
 export const releaseCommand = new Command()
@@ -47,10 +48,22 @@ export const releaseCommand = new Command()
     "--allow-branch",
     "Allow release from any branch, bypassing branch restrictions",
   )
+  .option("--otp <code>", "One-time password for two-factor authentication")
   .action(async (packages: string[], commandOptions: ReleaseCommandOptions) => {
     const logger = new Logger();
     try {
       const config = await loadConfig();
+
+      // Override npm config with CLI options
+      if (commandOptions.otp) {
+        config.npm = {
+          ...config.npm,
+          otp: commandOptions.otp,
+        };
+
+        logger.debug("Updated npm config with CLI OTP");
+      }
+
       const releaseService = new ReleaseService(config, logger);
       const workspaceService = new WorkspaceService();
 

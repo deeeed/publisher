@@ -44,13 +44,14 @@ export interface PackageManagerService {
 }
 
 export class PackageManagerFactory {
-  private static logger = new Logger();
-
   static create(
     packageManager: "npm" | "yarn",
     config: NpmConfig,
+    logger?: Logger,
   ): PackageManagerService {
-    this.logger.debug("Creating package manager service:", {
+    const serviceLogger = logger ?? new Logger();
+
+    serviceLogger.debug("Creating package manager service:", {
       type: packageManager,
       registry: config.registry,
       access: config.access,
@@ -60,19 +61,19 @@ export class PackageManagerFactory {
 
     switch (packageManager) {
       case "npm":
-        this.logger.debug("Initializing NPM service");
-        service = new NpmService(config);
+        serviceLogger.debug("Initializing NPM service");
+        service = new NpmService(config, serviceLogger);
         break;
       case "yarn":
-        this.logger.debug("Initializing Yarn service");
-        service = new YarnService(config);
+        serviceLogger.debug("Initializing Yarn service");
+        service = new YarnService(config, serviceLogger);
         break;
       default: {
         throw new Error("Unsupported package manager");
       }
     }
 
-    this.logger.debug("Package manager service created successfully");
+    serviceLogger.debug("Package manager service created successfully");
     return service;
   }
 }

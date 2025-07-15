@@ -47,6 +47,7 @@ export class ReleaseService {
     this.packageManager = PackageManagerFactory.create(
       config.packageManager,
       config.npm,
+      this.logger,
     );
     this.version = new VersionService(config.git);
     this.workspace = new WorkspaceService(config, this.logger);

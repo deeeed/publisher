@@ -74,7 +74,7 @@ export class NpmService implements PackageManagerService {
 
     try {
       const execa = (await import("execa")).default;
-      await execa("npm", publishArgs, { cwd: context.path });
+      await execa("npm", publishArgs, { cwd: context.path, stdio: "inherit" });
 
       return {
         published: true,

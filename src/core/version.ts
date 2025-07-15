@@ -180,7 +180,7 @@ export class VersionService {
       const prereleaseId = parsed.prerelease[0];
       if (
         typeof prereleaseId === "string" &&
-        !prereleaseId.match(/^[a-zA-Z][\w.-]*$/)
+        !/^[a-zA-Z][\w.-]*$/.exec(prereleaseId)
       ) {
         throw new Error(
           "Invalid prerelease identifier format. Must start with a letter and contain only alphanumeric characters, dots, and hyphens.",
@@ -191,7 +191,7 @@ export class VersionService {
     // Validate build metadata format if present
     if (parsed.build.length > 0) {
       const buildId = parsed.build[0];
-      if (!buildId.match(/^[\w.-]+$/)) {
+      if (!/^[\w.-]+$/.exec(buildId)) {
         throw new Error(
           "Invalid build metadata format. Must contain only alphanumeric characters, dots, and hyphens.",
         );
